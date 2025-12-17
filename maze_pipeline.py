@@ -27,25 +27,33 @@ def mouse_callback(event, x, y, flags, param):
 
 def order_points(pts):
     """
-    Sorts points into specific order: [Top-Left, Top-Right, Bottom-Right, Bottom-Left].
-    This allows the user to click corners in any order.
+    Robustly orders points as: Top-Left, Top-Right, Bottom-Right, Bottom-Left.
     """
-    pts = np.array(pts, dtype="float32")
-    rect = np.zeros((4, 2), dtype="float32")
-
-    # Top-Left has the smallest sum(x+y)
-    # Bottom-Right has the largest sum(x+y)
-    s = pts.sum(axis=1)
-    rect[0] = pts[np.argmin(s)]
-    rect[2] = pts[np.argmax(s)]
-
-    # Top-Right has the smallest difference(y-x)
-    # Bottom-Left has the largest difference(y-x)
-    diff = np.diff(pts, axis=1)
-    rect[1] = pts[np.argmin(diff)]
-    rect[3] = pts[np.argmax(diff)]
-
-    return rect
+    # 1. Convert to a list of lists/tuples just in case
+    pts = [list(x) for x in pts]
+    
+    # 2. Sort all points by their Y-coordinate (Ascending)
+    # The top two points will have the smallest Y values
+    pts.sort(key=lambda x: x[1])
+    
+    # Slice the top 2 (Top-Left and Top-Right) and bottom 2 (Bottom-Left and Bottom-Right)
+    top_most = pts[:2]
+    bottom_most = pts[2:]
+    
+    # 3. Sort the top points by their X-coordinate
+    # Smallest X is Top-Left, Largest X is Top-Right
+    top_most.sort(key=lambda x: x[0])
+    tl = top_most[0]
+    tr = top_most[1]
+    
+    # 4. Sort the bottom points by their X-coordinate
+    # Smallest X is Bottom-Left, Largest X is Bottom-Right
+    bottom_most.sort(key=lambda x: x[0])
+    bl = bottom_most[0]
+    br = bottom_most[1]
+    
+    # 5. Return in the order expected by warp_perspective: TL, TR, BR, BL
+    return np.array([tl, tr, br, bl], dtype="float32")
 
 def warp_perspective(image, sorted_corners, output_size=(600, 600)):
     """
@@ -69,29 +77,21 @@ def process_pipeline(image):
     """
     # 1. Grayscale & Blur
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    blurred = cv2.GaussianBlur(gray, (5, 5), 2)
+
+    binary = ((blurred > 100)*255).astype(np.uint8)
     
-    # 2. Threshold
-    # Adjust Block Size (11) and C (2) based on your lighting
-    binary = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-                                   cv2.THRESH_BINARY_INV, 11, 2)
+    # Clean Noise
+    kernel = np.ones((20,20), np.uint8)
+    binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel, iterations=1)
     
-    # 3. Clean Noise
-    kernel = np.ones((3,3), np.uint8)
-    binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel, iterations=2)
-    
-    # 4. Skeletonize
-    # Convert to boolean (0/1) for skimage, then back to uint8 (0-255) for OpenCV
-    skeleton = skeletonize(binary > 0)
-    skeleton_vis = (skeleton * 255).astype(np.uint8)
-    
-    return binary, skeleton_vis
+    return blurred, binary
 
 # --- MAIN LOOP ---
 if __name__ == "__main__":
     # LOAD IMAGE
     # Replace with your actual image path or use 0 for webcam (see note below)
-    img = cv2.imread('maze_photo.webp') 
+    img = cv2.imread('maze_photo4.jpeg') 
 
     if img is None:
         print("Error: Image not found.")
@@ -135,12 +135,12 @@ if __name__ == "__main__":
     warped_view = warp_perspective(img, sorted_pts)
     
     # 3. Vision Pipeline
-    binary_map, skeleton_map = process_pipeline(warped_view)
+    blurred, binary_map = process_pipeline(warped_view)
 
     # 4. Show Results
     cv2.imshow("1. Warped View", warped_view)
+    cv2.imshow("1. Blurred", blurred)
     cv2.imshow("2. Binary Map", binary_map)
-    cv2.imshow("3. Skeleton (Path Center)", skeleton_map)
 
     print("Processing complete. Press any key to exit.")
     cv2.waitKey(0)
