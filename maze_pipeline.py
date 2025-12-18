@@ -82,10 +82,13 @@ def process_pipeline(image):
     binary = ((blurred > 100)*255).astype(np.uint8)
     
     # Clean Noise
-    kernel = np.ones((20,20), np.uint8)
+    kernel = np.ones((5,5), np.uint8)
     binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel, iterations=1)
+
+    skeleton = skeletonize(binary > 0)
+    skeleton_vis = (skeleton * 255).astype(np.uint8)
     
-    return blurred, binary
+    return blurred, skeleton_vis
 
 # --- MAIN LOOP ---
 if __name__ == "__main__":
