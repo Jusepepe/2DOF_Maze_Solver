@@ -79,7 +79,7 @@ def process_pipeline(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 2)
 
-    binary = ((blurred > 100)*255).astype(np.uint8)
+    binary = ((blurred > 150)*255).astype(np.uint8)
     
     # Clean Noise
     kernel = np.ones((5,5), np.uint8)
@@ -94,7 +94,7 @@ def process_pipeline(image):
 if __name__ == "__main__":
     # LOAD IMAGE
     # Replace with your actual image path or use 0 for webcam (see note below)
-    img = cv2.imread('maze_photo4.jpeg') 
+    img = cv2.imread('maze5.jpeg') 
 
     if img is None:
         print("Error: Image not found.")

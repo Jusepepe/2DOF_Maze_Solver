@@ -7,7 +7,7 @@ import maze_solver as ms
 
 def main():
     # 1) Load the original photo
-    img = cv2.imread('maze_photo4.jpeg')
+    img = cv2.imread('maze7.png')
     if img is None:
         print("Error: maze_photo4.jpeg not found in current directory.")
         return
@@ -84,9 +84,8 @@ def main():
     robot_path = ms.simplify_path(raw_path, step=ms.ROBOT_WAYPOINT_STEP)
     print(f"Robot Waypoints: {len(robot_path)}")
 
-    # 8) Visualize solution on warped view
-    # Visualize on a colorized skeleton image for clarity
-    vis = cv2.cvtColor(skeleton_map, cv2.COLOR_GRAY2BGR)
+    # 8) Visualize solution directly on the warped (color) image
+    vis = warped_view.copy()
     for p in raw_path:
         vis[p[1], p[0]] = (255, 0, 0)  # Blue path
 

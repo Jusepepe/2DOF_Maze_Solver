@@ -59,7 +59,10 @@ def solve_bfs(binary_img, start, end):
     
     # Directions: Up, Down, Left, Right
     # Add diagonals [(1,1), (-1,-1)...] if you want diagonal movement
-    directions = [(0, 1), (0, -1), (1, 0), (-1, 0),(1,1), (-1,-1)]
+    directions = [
+    (0, 1), (0, -1), (1, 0), (-1, 0),
+    (1, 1), (-1, -1), (1, -1), (-1, 1)
+]
     
     while queue:
         path = queue.popleft()
