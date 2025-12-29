@@ -7,7 +7,7 @@ import maze_solver as ms
 
 def main():
     # 1) Load the original photo
-    img = cv2.imread('maze7.png')
+    img = cv2.imread('maze8.jpeg')
     if img is None:
         print("Error: maze_photo4.jpeg not found in current directory.")
         return
